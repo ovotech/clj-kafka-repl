@@ -1,3 +1,4 @@
 target/
 clj-kafka-repl.iml
 .idea
+.lein-repl-history

@@ -3,7 +3,6 @@
             [clojure.spec.test.alpha :as stest]
             [clojure.term.colors :refer [cyan yellow green magenta]]
             [clj-kafka-repl.kafka :as kafka]
-            [clj-kafka-repl.admin :as admin]
             [clj-kafka-repl.channel :as ch]))
 
 (defn get-namespace-functions
@@ -17,7 +16,7 @@
 
 (defn help
   ([]
-   (->> ['kafka 'admin 'channel]
+   (->> ['kafka 'ch]
         (map help)
         vec)
    nil)

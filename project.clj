@@ -1,5 +1,6 @@
 (defproject clj-kafka-repl "0.1.0"
-  :dependencies [[bigsy/clj-nippy-serde "0.1.0"]
+  :dependencies [[aero "1.1.3"]
+                 [bigsy/clj-nippy-serde "0.1.0"]
                  [cheshire "5.8.1"]
                  [clojure.java-time "0.3.2"]
                  [clojure-term-colors "0.1.0"]
@@ -7,12 +8,8 @@
                  [org.clojure/clojure "1.10.1"]
                  [org.clojure/core.async "0.4.500"]
                  [org.clojure/tools.logging "0.4.1"]
-                 ;[org.slf4j/jcl-over-slf4j "1.7.25"]
-                 ;[org.slf4j/jul-to-slf4j "1.7.25"]
-                 ;[org.slf4j/log4j-over-slf4j "1.7.25"]
                  [org.slf4j/slf4j-api "1.7.26"]
-                 [ovotech/kafka-avro-confluent "2.1.0-3"]
-                 ]
+                 [ovotech/kafka-avro-confluent "2.1.0-3"]]
 
   :plugins [[mvxcvi/whidbey "2.0.0"]
             [lein-codox "0.10.5"]]

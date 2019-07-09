@@ -2,7 +2,6 @@
   (:require [clojure.spec.alpha :as s]
             [clj-kafka-repl.confirm :refer [with-confirmation]]
             [clj-kafka-repl.channel :as ch]
-            [clj-kafka-repl.config :refer [normalize-config]]
             [clj-kafka-repl.confirm :refer [with-confirmation] :as confirm]
             [clj-kafka-repl.deserialization :refer [new-deserializer]]
             [clojure.core.async :as async]
@@ -26,6 +25,13 @@
           (jt/zoned-date-time s)
           (catch Exception _ nil)))
       boolean))
+
+(defn normalize-config
+  [config]
+  (->> config
+       (clojure.walk/stringify-keys)
+       (map (fn [[k v]] [k (if (number? v) (int v) v)]))
+       (into {})))
 
 (s/def ::zoned-date-time-string zoned-date-time-string?)
 (s/def ::non-blank-string (s/and string? (complement clojure.string/blank?)))
@@ -310,27 +316,10 @@
 
 (defn consume
   "Opens a consumer over the specified topic and returns a ::ch/tracked-channel which is a wrapper over a core.async
-  channel. It can be prodded using the functions in the energy-contracts-tools.channel namespace.
+  channel.
 
   The channel will stay open indefinitely unless either: a) the channel is explicitly closed using ch/close! or b)
   the specified message limit is reached.
-
-  Examples of opening channels:
-
-  - Stream all new messages from the
-    (def tc (kafka/consume :gas-consumption))
-
-  - Stream all messages from the given offset
-    (def tc (kafka/consume :gas-consumption :offset 123456))
-
-  - Stream the first 3 contract events that have the specified contractId
-    (def tc (kafka/consume :contracts :offset :start :limit 3 :filter-fn #(= \"mycontractid\" (:contractId (:value %)))))
-
-  - Stream any contracts that include the string \"whatever\"
-    (def tc (kafka/consume :contracts :offset :start :filter-fn \"whatever\"))
-
-  - Stream nippy-serialized messages
-    (def tc (kafka/consume :cc-consolidated :deserializer kafka/nippy-deserializer))
 
   Examples of pulling data from channels:
 
