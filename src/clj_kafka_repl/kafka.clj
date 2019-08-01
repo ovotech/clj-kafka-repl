@@ -3,16 +3,17 @@
             [clj-kafka-repl.confirm :refer [with-confirmation]]
             [clj-kafka-repl.channel :as ch]
             [clj-kafka-repl.confirm :refer [with-confirmation] :as confirm]
-            [clj-kafka-repl.deserialization :refer [new-deserializer]]
+            [clj-kafka-repl.deserialization :as dser :refer [new-deserializer]]
+            [clj-kafka-repl.serialization :as ser :refer [new-serializer]]
             [clojure.core.async :as async]
             [clojure.core.async.impl.protocols :as async-protocols]
             [clojure.tools.logging :as log]
             [java-time :as jt])
-  (:import [org.apache.kafka.common.serialization Deserializer]
-           (org.apache.kafka.clients.consumer KafkaConsumer)
+  (:import (org.apache.kafka.clients.consumer KafkaConsumer)
            (org.apache.kafka.common TopicPartition)
            (java.util.concurrent TimeUnit)
-           (java.util UUID)))
+           (java.util UUID)
+           (org.apache.kafka.clients.producer ProducerRecord KafkaProducer)))
 
 (def max-poll-records 500)
 
@@ -55,21 +56,11 @@
 (s/def ::bootstrap.servers ::non-blank-string)
 (s/def ::kafka-config (s/keys :req-un [::bootstrap.servers]))
 
-(def default-deserializer (new-deserializer :string))
+(def default-key-deserializer (new-deserializer :string))
+(def default-value-deserializer (new-deserializer :edn))
 
-(defn- to-epoch-millis
-  [x]
-  (->> x jt/zoned-date-time jt/instant jt/to-millis-from-epoch))
-
-(defn- get-offsets-at-timestamp
-  [consumer topic partitions timestamp]
-  (->> partitions
-       (map #(TopicPartition. topic %))
-       (reduce (fn [acc tp] (assoc acc tp timestamp)))
-       (.offsetsForTimes consumer)
-       (map (fn [[tp ot]]
-              (vector (.partition tp)
-                      (.offset ot))))))
+(def default-key-serializer (new-serializer :string))
+(def default-value-serializer (new-serializer :edn))
 
 (defn get-group-offset
   "Gets the offset of the given consumer group on the given topic/partition."
@@ -77,7 +68,7 @@
   (let [cc           (-> kafka-config
                          (merge {:group.id group-id})
                          normalize-config)
-        new-consumer (KafkaConsumer. cc default-deserializer default-deserializer)
+        new-consumer (KafkaConsumer. cc default-key-deserializer default-value-deserializer)
         tp           (TopicPartition. topic partition)]
     (try
       (some-> (.committed new-consumer tp)
@@ -96,7 +87,7 @@
   "Gets the vector of partitions available for the given topic."
   [kafka-config topic]
   (let [cc           (normalize-config kafka-config)
-        new-consumer (KafkaConsumer. cc default-deserializer default-deserializer)]
+        new-consumer (KafkaConsumer. cc default-key-deserializer default-value-deserializer)]
     (try
       (->> (.partitionsFor new-consumer topic)
            (map #(.partition %))
@@ -121,7 +112,7 @@
   [kafka-config topic & {:keys [partitions]
                          :or   {partitions nil}}]
   (let [cc               (normalize-config kafka-config)
-        new-consumer     (KafkaConsumer. cc default-deserializer default-deserializer)
+        new-consumer     (KafkaConsumer. cc default-key-deserializer default-value-deserializer)
         topic-partitions (map #(TopicPartition. topic %)
                               (or partitions (get-topic-partitions kafka-config topic)))]
     (try
@@ -151,7 +142,7 @@
   [kafka-config topic & {:keys [partitions]
                          :or   {partitions nil}}]
   (let [cc               (normalize-config kafka-config)
-        new-consumer     (KafkaConsumer. cc default-deserializer default-deserializer)
+        new-consumer     (KafkaConsumer. cc default-key-deserializer default-value-deserializer)
         topic-partitions (map #(TopicPartition. topic %)
                               (or partitions (get-topic-partitions kafka-config topic)))]
     (try
@@ -190,20 +181,11 @@
   ; IMPORTANT: For this to work you need make sure that no consumers in the same group are
   ; already running against this partition.
   (let [tp              (TopicPartition. topic partition)
-        adjusted-offset (cond
-                          (zoned-date-time-string? new-offset)
-                          (->> new-offset
-                               to-epoch-millis
-                               (get-offsets-at-timestamp consumer topic [partition])
-                               first
-                               second)
-
-                          (neg-int? new-offset)
+        adjusted-offset (if (neg-int? new-offset)
                           (->> (.endOffsets consumer [tp])
                                (map (fn [[_ o]] (+ o new-offset)))
                                first)
-
-                          :else new-offset)]
+                          new-offset)]
     (prn (format "Setting offset on topic %s:%s and group %s to %s.\n\nIMPORTANT: Have you made sure that all consumers on the group have stopped?"
                  topic partition group-id adjusted-offset))
 
@@ -232,7 +214,7 @@
                              (merge {:group.id group-id})
                              normalize-config)
         create-consumer? (nil? consumer)
-        new-consumer     (or consumer (KafkaConsumer. cc default-deserializer default-deserializer))
+        new-consumer     (or consumer (KafkaConsumer. cc default-key-deserializer default-value-deserializer))
         topic-partitions (->> partition-offsets
                               (map first)
                               (map #(TopicPartition. topic %)))]
@@ -343,35 +325,36 @@
   | `:partition`         | `nil`   | Limit consumption to a specific partition. |
   | `:offset`            | `:end`  | Start consuming from the specified offset. Valid values: `:start`, `:end`, numeric offset, timestamp (as date/time string) |
   | `:partition-offsets` | `nil`   | Vector of partition+offset vector pairs that represent a by-partition representation of offsets to start consuming from. |
-  | `:deserializer`      | `nil`   | Deserializer to use to deserialize the message value. Will create an avro-deserializer if not specified (or nippy-deserializer if topic name contains the word 'internal'). |
+  | `:key-deserializer`  | `nil`   | Deserializer to use to deserialize the message key. Will use a string deserializer if not specified. |
+  | `:value-deserializer`| `nil`   | Deserializer to use to deserialize the message value. Will use an edn deserializer if not specified. |
   | `:limit`             | `nil`   | The maximum number of messages to pull back either into the stream or the results vector (depending on stream mode). |
   | `:filter-fn`         | `nil`   | `filter` function to apply to the incoming :kafka-message(s). Can be a string, in which case a filter on the message value containing that string is implied. |"
-  [kafka-config topic & {:keys [partition offset partition-offsets deserializer limit filter-fn]
-                         :or   {partition         nil
-                                offset            :end
-                                partition-offsets nil
-                                deserializer      nil
-                                limit             nil
-                                filter-fn         (constantly true)}}]
-  (let [group-id           (str "clj-kafka-repl-" (UUID/randomUUID))
-        final-deserializer (or deserializer default-deserializer)
-        cc                 (-> kafka-config
-                               (assoc :group.id group-id
-                                      :max.poll.records (cond
-                                                          (nil? limit) max-poll-records
-                                                          (> limit max-poll-records) max-poll-records
-                                                          :else limit))
-                               normalize-config)
-        consumer           (KafkaConsumer. cc default-deserializer final-deserializer)
-        partitions         (cond
-                             (some? partition-offsets) (map first partition-offsets)
-                             (some? partition) [partition]
-                             :else (map #(.partition %)
-                                        (.partitionsFor consumer topic)))
-        topic-partitions   (map #(TopicPartition. topic %) partitions)
-        final-filter-fn    (if (string? filter-fn)
-                             #(clojure.string/includes? % filter-fn)
-                             filter-fn)]
+  [kafka-config topic & {:keys [partition offset partition-offsets key-deserializer value-deserializer limit filter-fn]
+                         :or   {partition          nil
+                                offset             :end
+                                partition-offsets  nil
+                                key-deserializer   default-key-deserializer
+                                value-deserializer default-value-deserializer
+                                limit              nil
+                                filter-fn          (constantly true)}}]
+  (let [group-id         (str "clj-kafka-repl-" (UUID/randomUUID))
+        cc               (-> kafka-config
+                             (assoc :group.id group-id
+                                    :max.poll.records (cond
+                                                        (nil? limit) max-poll-records
+                                                        (> limit max-poll-records) max-poll-records
+                                                        :else limit))
+                             normalize-config)
+        consumer         (KafkaConsumer. cc key-deserializer value-deserializer)
+        partitions       (cond
+                           (some? partition-offsets) (map first partition-offsets)
+                           (some? partition) [partition]
+                           :else (map #(.partition %)
+                                      (.partitionsFor consumer topic)))
+        topic-partitions (map #(TopicPartition. topic %) partitions)
+        final-filter-fn  (if (string? filter-fn)
+                           #(clojure.string/includes? % filter-fn)
+                           filter-fn)]
 
     (.assign consumer topic-partitions)
 
@@ -480,7 +463,8 @@
                                        :partition (s/cat :opt #(= % :partition) :value nat-int?)
                                        :partition-offsets (s/coll-of ::partition-offset)
                                        :offset (s/cat :opt #(= % :offset) :value ::offset-specification)
-                                       :deserializer (s/cat :opt #(= % :deserializer) :value #(instance? Deserializer %))
+                                       :key-deserializer (s/cat :opt #(= % :key-deserializer) :value ::dser/deserializer)
+                                       :value-deserializer (s/cat :opt #(= % :value-deserializer) :value ::dser/deserializer)
                                        :filter-fn (s/cat :opt #(= % :filter-fn) :value (s/or :string string? :fn fn?)))))
         :ret ::ch/tracked-channel)
 
@@ -503,7 +487,7 @@
 (s/fdef sample
         :args (s/cat :kafka-config ::kafka-config
                      :topic ::topic
-                     :args (s/* (s/alt :deserializer (s/cat :opt #(= % :deserializer) :value #(instance? Deserializer %)))))
+                     :args (s/* (s/alt :deserializer (s/cat :opt #(= % :deserializer) :value ::dser/deserializer))))
         :ret map?)
 
 (defn get-message
@@ -538,55 +522,43 @@
         :args (s/cat :kafka-config ::kafka-config
                      :topic ::topic
                      :offset ::offset-specification
-                     :args (s/* (s/alt :deserializer (s/cat :opt #(= % :deserializer) :value #(instance? Deserializer %))
+                     :args (s/* (s/alt :deserializer (s/cat :opt #(= % :deserializer) :value ::dser/deserializer)
                                        :partition (s/cat :opt #(= % :partition) :value ::partition))))
         :ret map?)
 
-(defn get-offsets-at-time
-  "Get the offsets that were current at the specified point in time on the given topic."
-  [kafka-config topic date-time-string]
-  (let [partitions        (-> (get-topic-partitions kafka-config topic)
-                              (sort))
-        cc                (normalize-config kafka-config)
-        consumer          (KafkaConsumer. cc default-deserializer default-deserializer)
-        partition-offsets (->> date-time-string
-                               to-epoch-millis
-                               (get-offsets-at-timestamp consumer topic partitions)
-                               (sort-by first)
-                               vec)
-        offsets           (map second partition-offsets)]
-    (-> {:earliest     (apply min offsets)
-         :latest       (apply max offsets)
-         :by-partition partition-offsets})))
-
-(s/fdef get-offsets-at-time
-        :args (s/cat :kafka-config ::kafka-config
-                     :topic ::topic
-                     :date-time-string ::zoned-date-time-string
-                     :overrides (s/* (s/alt :verbose? (s/cat :opt #(= % :verbose?) :value boolean?))))
-        :ret map?)
-
-(defn message-count-between
-  "Calculates the number of messages that appeared on the topic between the given times.
+(defn produce
+  "Produce messages to the specified topic.
 
   | key                | default | description |
   |:-------------------|:--------|:------------|
-  | `:verbose?`        | `false` | If `true`, will include by-partition breakdown. |"
-  [kafka-config topic date-time-from date-time-to & {:keys [verbose?] :or {verbose? false}}]
-  (let [{partition-offsets-from :by-partition} (get-offsets-at-time kafka-config topic date-time-from)
-        {partition-offsets-to :by-partition} (get-offsets-at-time kafka-config topic date-time-to)
-        partition-offsets-diff (map (fn [[p o1] [_ o2]]
-                                      (vector p (- o2 o1)))
-                                    partition-offsets-from partition-offsets-to)
-        result                 {:total (apply + (map second partition-offsets-diff))}]
-    (if verbose?
-      (assoc result :by-partition partition-offsets-diff)
-      result)))
+  | `:key-serializer`  | `nil`   | Serializer to use to serialize the message key. Will use a string deserializer if not specified. |
+  | `:value-serializer`| `nil`   | Serializer to use to serialize the message value. Will use an edn serializer if not specified. |"
+  ([kafka-config topic & {:keys [key-serializer value-serializer]
+                          :or   {key-serializer   default-key-serializer
+                                 value-serializer default-value-serializer}}]
+   (let [producer-config (normalize-config kafka-config)
+         producer        (KafkaProducer. producer-config key-serializer value-serializer)
+         ch              (async/chan)]
 
-(s/fdef message-count-between
+     (future
+       (try
+         (loop [next (async/<!! ch)]
+           (when next
+             (case next
+               :flush (.flush producer)
+
+               (let [[k v] next
+                     record (ProducerRecord. topic k v)]
+                 (.send producer record)))
+             (recur (async/<!! ch))))
+         (finally
+           (.close producer)
+           (println "Producer closed."))))
+     ch)))
+
+(s/fdef produce
         :args (s/cat :kafka-config ::kafka-config
                      :topic ::topic
-                     :date-time-from ::zoned-date-time-string
-                     :date-time-to ::zoned-date-time-string
-                     :overrides (s/* (s/alt :verbose? (s/cat :opt #(= % :verbose?) :value boolean?))))
-        :ret map?)
+                     :args (s/* (s/alt :key-serializer (s/cat :opt #(= % :key-serializer) :value ::ser/serializer)
+                                       :value-serializer (s/cat :opt #(= % :value-serializer) :value ::ser/serializer))))
+        :ret ::ch/channel)

@@ -2,13 +2,18 @@
   (:require [clojure.edn :as edn]
             [kafka-avro-confluent.deserializers :refer [->avro-deserializer]]
             [kafka-avro-confluent.schema-registry-client :refer [->schema-registry-client]]
-            [clj-nippy-serde.serialization :refer [nippy-deserializer]])
-  (:import (org.apache.kafka.common.serialization Deserializer StringDeserializer)))
+            [clj-nippy-serde.serialization :refer [nippy-deserializer]]
+            [clojure.spec.alpha :as s])
+  (:import (org.apache.kafka.common.serialization Deserializer StringDeserializer)
+           (java.nio.charset StandardCharsets)))
+
+(s/def ::deserializer #(instance? Deserializer %))
 
 (deftype EdnDeserializer []
   Deserializer
   (configure [_ _ _])
-  (deserialize [_ _ data] (edn/read-string data))
+  (deserialize [_ _ data]
+    (-> data (String. StandardCharsets/UTF_8) edn/read-string))
   (close [_]))
 
 (deftype NoopDeserializer []
