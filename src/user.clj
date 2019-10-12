@@ -3,7 +3,8 @@
             [clojure.spec.test.alpha :as stest]
             [clojure.term.colors :refer [cyan yellow green magenta]]
             [clj-kafka-repl.kafka :as kafka]
-            [clj-kafka-repl.channel :as ch]))
+            [clj-kafka-repl.channel :as ch])
+  (:import [sun.security.tools.keytool Main]))
 
 (defn get-namespace-functions
   [ns]
@@ -35,6 +36,10 @@
        (println)))
 
    (println)))
+
+(defn create-keystore
+  []
+  (Main/main (into-array String [])))
 
 (stest/instrument)
 

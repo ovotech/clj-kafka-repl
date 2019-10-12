@@ -4,8 +4,8 @@
             [energy-contracts-tools.confirm :as confirm]
             [clj-kafka-repl.kafka :as sut]
             [clj-kafka-repl.kafka-utils :as kafka :refer [ensure-topic]]
-            [energy-contracts-tools.test-utils :refer [random-id with-edn-producer with-edn-consumer init-logging!]]
-            [energy-contracts-tools.explicit-partitioner :as ep]
+            [clj-kafka-repl.test-utils :refer [random-id with-edn-producer with-edn-consumer init-logging!]]
+            [clj-kafka-repl.explicit-partitioner :as ep]
             [zookareg.core :as zkr]))
 
 (def kafka-config {:bootstrap.servers "127.0.0.1:9092"
@@ -39,7 +39,7 @@
         kafka-config topic group-id :end
         (fn [consumer]
           (.commitSync consumer)
-          (is (= [[0 2] [1 2]] (sut/get-group-offsets topic group-id)))
+          (is (= [[0 2] [1 2]] (sut/get-group-offsets kafka-config topic group-id)))
 
           ; WHEN the consumer group offset is set to the start of all partitions
           (binding [confirm/*no-confirm?* true]
@@ -69,7 +69,7 @@
         kafka-config topic group-id :start
         (fn [consumer]
           (.commitSync consumer)
-          (is (= [[0 0] [1 0]] (sut/get-group-offsets topic group-id)))
+          (is (= [[0 0] [1 0]] (sut/get-group-offsets kafka-config topic group-id)))
 
           ; WHEN the consumer group offset is set to the end of all partitions
           (binding [confirm/*no-confirm?* true]
@@ -77,7 +77,7 @@
           (.commitSync consumer)))
 
       ; THEN the offsets are successfully reset to the end of the topic
-      (is (= [[0 1] [1 1]] (sut/get-group-offsets topic group-id))))))
+      (is (= [[0 1] [1 1]] (sut/get-group-offsets kafka-config topic group-id))))))
 
 (deftest can-set-group-offset-to-absolute-offset
   (let [topic (random-id)]
@@ -99,7 +99,7 @@
         kafka-config topic group-id :start
         (fn [consumer]
           (.commitSync consumer)
-          (is (= [[0 0] [1 0]] (sut/get-group-offsets topic group-id)))
+          (is (= [[0 0] [1 0]] (sut/get-group-offsets kafka-config topic group-id)))
 
           ; WHEN the consumer group offset is set to position 1 in 1 partition
           (binding [confirm/*no-confirm?* true]
@@ -107,7 +107,7 @@
           (.commitSync consumer)))
 
       ; THEN the offset for the specified partition is successfully reset
-      (is (= [[0 1] [1 0]] (sut/get-group-offsets topic group-id)))
+      (is (= [[0 1] [1 0]] (sut/get-group-offsets kafka-config topic group-id)))
 
       (with-edn-consumer
         kafka-config topic group-id nil
@@ -136,7 +136,7 @@
         kafka-config topic group-id :end
         (fn [consumer]
           (.commitSync consumer)
-          (is (= [[0 2] [1 2]] (sut/get-group-offsets topic group-id)))
+          (is (= [[0 2] [1 2]] (sut/get-group-offsets kafka-config topic group-id)))
 
           ; WHEN the consumer group offset is moved back 1 from current position
           (binding [confirm/*no-confirm?* true]
@@ -144,7 +144,7 @@
           (.commitSync consumer)))
 
       ; THEN the offsets are successfully reset to the end of the topic
-      (is (= [[0 1] [1 2]] (sut/get-group-offsets topic group-id)))
+      (is (= [[0 1] [1 2]] (sut/get-group-offsets kafka-config topic group-id)))
 
       (with-edn-consumer
         kafka-config topic group-id nil

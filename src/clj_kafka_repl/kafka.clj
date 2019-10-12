@@ -461,7 +461,7 @@
                      :topic ::topic
                      :args (s/* (s/alt :limit (s/cat :opt #(= % :limit) :value pos-int?)
                                        :partition (s/cat :opt #(= % :partition) :value nat-int?)
-                                       :partition-offsets (s/coll-of ::partition-offset)
+                                       :partition-offsets (s/coll-of ::partition-offset-specification)
                                        :offset (s/cat :opt #(= % :offset) :value ::offset-specification)
                                        :key-deserializer (s/cat :opt #(= % :key-deserializer) :value ::dser/deserializer)
                                        :value-deserializer (s/cat :opt #(= % :value-deserializer) :value ::dser/deserializer)

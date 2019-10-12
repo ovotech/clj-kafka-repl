@@ -29,12 +29,12 @@
                               (clojure.term.colors/yellow " for more information.")))}
 
   :profiles {:dev  {:dependencies   [[ch.qos.logback/logback-classic "1.2.3"]
-                                     [ch.qos.logback/logback-core "1.2.3"]]
+                                     [ch.qos.logback/logback-core "1.2.3"]
+                                     [vise890/zookareg "2.1.0-2"]]
 
                     :eftest         {:multithread? false}
                     :source-paths   ["dev/clj"]
                     :resource-paths ["dev/resources" "test/resources"]
                     :plugins        [[lein-eftest "0.4.2"]]
 
-                    :repl-options   {:init-ns user}}
-             :test {:dependencies [[vise890/zookareg "2.1.0-2"]]}})
+                    :repl-options   {:init-ns user}}})

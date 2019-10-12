@@ -24,7 +24,7 @@
 
 (defmulti new-deserializer
           "Constructs a kafka deserializer of the specified type."
-          (fn [x] x))
+          (fn [x & _] x))
 
 (defmethod new-deserializer :edn [_]
   (->EdnDeserializer))
@@ -35,10 +35,10 @@
 (defmethod new-deserializer :nippy [_]
   (nippy-deserializer))
 
-(defmethod new-deserializer :avro [schema-registry-config]
+(defmethod new-deserializer :avro [_ schema-registry-config]
   (-> schema-registry-config
       ->schema-registry-client
       ->avro-deserializer))
 
-(defmethod new-deserializer :noop []
+(defmethod new-deserializer :noop [_]
   (->NoopDeserializer))
