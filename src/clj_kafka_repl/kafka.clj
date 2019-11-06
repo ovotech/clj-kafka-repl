@@ -294,7 +294,8 @@
    :offset         (.offset cr)
    :timestamp      (-> (.timestamp cr) jt/instant str)
    :timestamp-type (str (.timestampType cr))
-   :value          (.value cr)})
+   :value          (.value cr)
+   :type           (type (.value cr))})
 
 (defn consume
   "Opens a consumer over the specified topic and returns a ::ch/tracked-channel which is a wrapper over a core.async
@@ -384,7 +385,7 @@
         (let [earliest-offset   (apply min (map second (get-earliest-offsets kafka-config topic :partitions partitions)))
               partition-offsets (vec (map #(vector % offset) partitions))]
           (if (< earliest-offset offset)
-            (set-group-offsets! topic group-id partition-offsets :consumer consumer)
+            (set-group-offsets! kafka-config topic group-id partition-offsets :consumer consumer)
             (do
               (log/info "Specified offset is before the earliest offset. Therefore, will seek from beginning.")
               (.seekToBeginning consumer topic-partitions))))))
