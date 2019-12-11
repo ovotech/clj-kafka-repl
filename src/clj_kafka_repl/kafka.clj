@@ -5,6 +5,7 @@
             [clj-kafka-repl.confirm :refer [with-confirmation] :as confirm]
             [clj-kafka-repl.deserialization :as dser :refer [new-deserializer]]
             [clj-kafka-repl.serialization :as ser :refer [new-serializer]]
+            [clj-kafka-repl.core :refer [*config*]]
             [clojure.core.async :as async]
             [clojure.core.async.impl.protocols :as async-protocols]
             [clojure.tools.logging :as log]
@@ -27,7 +28,7 @@
           (catch Exception _ nil)))
       boolean))
 
-(defn normalize-config
+(defn ^:no-doc normalize-config
   [config]
   (->> config
        (clojure.walk/stringify-keys)
@@ -64,8 +65,9 @@
 
 (defn get-group-offset
   "Gets the offset of the given consumer group on the given topic/partition."
-  [kafka-config topic group-id partition]
-  (let [cc           (-> kafka-config
+  [topic group-id partition]
+  (let [kafka-config (:kafka-config *config*)
+        cc           (-> kafka-config
                          (merge {:group.id group-id})
                          normalize-config)
         new-consumer (KafkaConsumer. cc default-key-deserializer default-value-deserializer)
@@ -77,16 +79,16 @@
         (.close new-consumer 0 TimeUnit/SECONDS)))))
 
 (s/fdef get-group-offset
-        :args (s/cat :kafka-config ::kafka-config
-                     :topic ::topic
+        :args (s/cat :topic ::topic
                      :group-id ::non-blank-string
                      :partition nat-int?)
         :ret nat-int?)
 
 (defn get-topic-partitions
   "Gets the vector of partitions available for the given topic."
-  [kafka-config topic]
-  (let [cc           (normalize-config kafka-config)
+  [topic]
+  (let [kafka-config (:kafka-config *config*)
+        cc           (normalize-config kafka-config)
         new-consumer (KafkaConsumer. cc default-key-deserializer default-value-deserializer)]
     (try
       (->> (.partitionsFor new-consumer topic)
@@ -98,8 +100,7 @@
         (.close new-consumer 0 TimeUnit/SECONDS)))))
 
 (s/fdef get-topic-partitions
-        :args (s/cat :kafka-config ::kafka-config
-                     :topic ::topic)
+        :args (s/cat :topic ::topic)
         :ret (s/coll-of nat-int?))
 
 (defn get-latest-offsets
@@ -109,12 +110,13 @@
   | key                | default | description |
   |:-------------------|:--------|:------------|
   | `:partitions`      | `nil`   | Limit the results to the specified collection of partitions. |"
-  [kafka-config topic & {:keys [partitions]
-                         :or   {partitions nil}}]
-  (let [cc               (normalize-config kafka-config)
+  [topic & {:keys [partitions]
+            :or   {partitions nil}}]
+  (let [kafka-config     (:kafka-config *config*)
+        cc               (normalize-config kafka-config)
         new-consumer     (KafkaConsumer. cc default-key-deserializer default-value-deserializer)
         topic-partitions (map #(TopicPartition. topic %)
-                              (or partitions (get-topic-partitions kafka-config topic)))]
+                              (or partitions (get-topic-partitions topic)))]
     (try
       (->> (.endOffsets new-consumer topic-partitions)
            (map (fn [[tp o]]
@@ -126,8 +128,7 @@
         (.close new-consumer 0 TimeUnit/SECONDS)))))
 
 (s/fdef get-latest-offsets
-        :args (s/cat :kafka-config ::kafka-config
-                     :topic ::topic
+        :args (s/cat :topic ::topic
                      :overrides (s/* (s/alt :partitions (s/cat :opt #(= % :partitions)
                                                                :value (s/coll-of nat-int?)))))
         :ret (s/coll-of ::partition-offset))
@@ -139,12 +140,13 @@
   | key                | default | description |
   |:-------------------|:--------|:------------|
   | `:partitions`      | `nil`   | Limit the results to the specified collection of partitions. |"
-  [kafka-config topic & {:keys [partitions]
-                         :or   {partitions nil}}]
-  (let [cc               (normalize-config kafka-config)
+  [topic & {:keys [partitions]
+            :or   {partitions nil}}]
+  (let [kafka-config     (:kafka-config *config*)
+        cc               (normalize-config kafka-config)
         new-consumer     (KafkaConsumer. cc default-key-deserializer default-value-deserializer)
         topic-partitions (map #(TopicPartition. topic %)
-                              (or partitions (get-topic-partitions kafka-config topic)))]
+                              (or partitions (get-topic-partitions topic)))]
     (try
       (->> (.beginningOffsets new-consumer topic-partitions)
            (map (fn [[tp o]]
@@ -155,23 +157,21 @@
         (.close new-consumer 0 TimeUnit/SECONDS)))))
 
 (s/fdef get-earliest-offsets
-        :args (s/cat :kafka-config ::kafka-config
-                     :topic ::topic
+        :args (s/cat :topic ::topic
                      :overrides (s/* (s/alt :partitions (s/cat :opt #(= % :partitions)
                                                                :value (s/coll-of nat-int?)))))
         :ret (s/coll-of ::partition-offset))
 
 (defn get-group-offsets
   "Gets the offsets on all partitions of the given topic for the specified consumer group."
-  [kafka-config topic group-id]
-  (->> (get-topic-partitions kafka-config topic)
+  [topic group-id]
+  (->> (get-topic-partitions topic)
        (map (fn [p]
-              [p (get-group-offset kafka-config topic group-id p)]))
+              [p (get-group-offset topic group-id p)]))
        (remove (fn [[_ o]] (nil? o)))))
 
 (s/fdef get-group-offsets
-        :args (s/cat :kafka-config ::kafka-config
-                     :topic ::topic
+        :args (s/cat :topic ::topic
                      :group-id ::non-blank-string)
         :ret (s/coll-of ::partition-offset))
 
@@ -209,8 +209,9 @@
   * :start - seek to start.
   * :end - seek to end.
   * date-time string - set offset to that which was current at the given time."
-  [kafka-config topic group-id partition-offsets & {:keys [consumer] :or {consumer nil}}]
-  (let [cc               (-> kafka-config
+  [topic group-id partition-offsets & {:keys [consumer] :or {consumer nil}}]
+  (let [kafka-config     (:kafka-config *config*)
+        cc               (-> kafka-config
                              (merge {:group.id group-id})
                              normalize-config)
         create-consumer? (nil? consumer)
@@ -234,8 +235,7 @@
             (.close new-consumer 0 TimeUnit/SECONDS)))))))
 
 (s/fdef set-group-offsets!
-        :args (s/cat :kafka-config ::kafka-config
-                     :topic ::topic
+        :args (s/cat :topic ::topic
                      :group-id ::non-blank-string
                      :partition-offsets (s/coll-of ::partition-offset-specification)
                      :overrides (s/* (s/alt :consumer (s/cat :opt #(= % :consumer)
@@ -244,7 +244,7 @@
 (defn- offsets-diff
   [current-offsets latest-offsets]
   (-> (map (fn [[p current-offset] [_ latest-offset]]
-             [p (- (or current-offset 0) latest-offset)])
+             [p (-> (or current-offset 0) (- latest-offset))])
            current-offsets
            latest-offsets)
       doall vec))
@@ -271,9 +271,9 @@
   | key                | default | description |
   |:-------------------|:--------|:------------|
   | `:verbose?`        | `false` | If `true`, will include by-partition breakdown. |"
-  [kafka-config topic group-id & {:keys [verbose?] :or {verbose? true}}]
-  (let [current-offsets (get-group-offsets kafka-config topic group-id)
-        latest-offsets  (get-latest-offsets kafka-config topic)]
+  [topic group-id & {:keys [verbose?] :or {verbose? true}}]
+  (let [current-offsets (get-group-offsets topic group-id)
+        latest-offsets  (get-latest-offsets topic)]
     (if verbose?
       (-> (to-lag-map current-offsets latest-offsets)
           (assoc :topic topic))
@@ -281,8 +281,7 @@
           (lag-sum)))))
 
 (s/fdef get-lag
-        :args (s/cat :kafka-config ::kafka-config
-                     :topic ::topic
+        :args (s/cat :topic ::topic
                      :group-id ::non-blank-string
                      :overrides (s/* (s/alt :verbose? (s/cat :opt #(= % :verbose?) :value boolean?))))
         :ret (s/or :map map? :lag int?))
@@ -330,15 +329,16 @@
   | `:value-deserializer`| `nil`   | Deserializer to use to deserialize the message value. Will use an edn deserializer if not specified. |
   | `:limit`             | `nil`   | The maximum number of messages to pull back either into the stream or the results vector (depending on stream mode). |
   | `:filter-fn`         | `nil`   | `filter` function to apply to the incoming :kafka-message(s). Can be a string, in which case a filter on the message value containing that string is implied. |"
-  [kafka-config topic & {:keys [partition offset partition-offsets key-deserializer value-deserializer limit filter-fn]
-                         :or   {partition          nil
-                                offset             :end
-                                partition-offsets  nil
-                                key-deserializer   default-key-deserializer
-                                value-deserializer default-value-deserializer
-                                limit              nil
-                                filter-fn          (constantly true)}}]
-  (let [group-id         (str "clj-kafka-repl-" (UUID/randomUUID))
+  [topic & {:keys [partition offset partition-offsets key-deserializer value-deserializer limit filter-fn]
+            :or   {partition          nil
+                   offset             :end
+                   partition-offsets  nil
+                   key-deserializer   default-key-deserializer
+                   value-deserializer default-value-deserializer
+                   limit              nil
+                   filter-fn          (constantly true)}}]
+  (let [kafka-config     (:kafka-config *config*)
+        group-id         (str "clj-kafka-repl-" (UUID/randomUUID))
         cc               (-> kafka-config
                              (assoc :group.id group-id
                                     :max.poll.records (cond
@@ -366,7 +366,7 @@
     (binding [confirm/*no-confirm?* true]
       (cond
         (some? partition-offsets)
-        (set-group-offsets! kafka-config topic group-id partition-offsets :consumer consumer)
+        (set-group-offsets! topic group-id partition-offsets :consumer consumer)
 
         (= :end offset)
         (.seekToEnd consumer topic-partitions)
@@ -375,17 +375,17 @@
         (.seekToBeginning consumer topic-partitions)
 
         (neg-int? offset)
-        (let [latest            (into {} (get-latest-offsets kafka-config topic :partitions partitions))
+        (let [latest            (into {} (get-latest-offsets topic :partitions partitions))
               partition-offsets (->> partitions
                                      (map #(vector % (+ (get latest %) offset)))
                                      vec)]
-          (set-group-offsets! kafka-config topic group-id partition-offsets :consumer consumer))
+          (set-group-offsets! topic group-id partition-offsets :consumer consumer))
 
         :else
         (let [earliest-offset   (apply min (map second (get-earliest-offsets kafka-config topic :partitions partitions)))
               partition-offsets (vec (map #(vector % offset) partitions))]
           (if (< earliest-offset offset)
-            (set-group-offsets! kafka-config topic group-id partition-offsets :consumer consumer)
+            (set-group-offsets! topic group-id partition-offsets :consumer consumer)
             (do
               (log/info "Specified offset is before the earliest offset. Therefore, will seek from beginning.")
               (.seekToBeginning consumer topic-partitions))))))
@@ -414,7 +414,7 @@
                                (into [] by-partition)
 
                                latest-offsets
-                               (get-latest-offsets kafka-config topic)
+                               (get-latest-offsets topic)
 
                                {:keys [total-lag offsets]}
                                (to-lag-map current-offsets latest-offsets)]
@@ -433,7 +433,7 @@
 
               (doseq [{:keys [partition offset]} messages]
                 (swap! progress #(-> %
-                                     (assoc-in [:by-partition partition] offset)
+                                     (assoc-in [:by-partition partition] (inc offset))
                                      (update :total-received inc))))
 
               (doseq [msg filtered]
@@ -458,8 +458,7 @@
       tracked-channel)))
 
 (s/fdef consume
-        :args (s/cat :kafka-config ::kafka-config
-                     :topic ::topic
+        :args (s/cat :topic ::topic
                      :args (s/* (s/alt :limit (s/cat :opt #(= % :limit) :value pos-int?)
                                        :partition (s/cat :opt #(= % :partition) :value nat-int?)
                                        :partition-offsets (s/coll-of ::partition-offset-specification)
@@ -486,8 +485,7 @@
         (ch/close! c)))))
 
 (s/fdef sample
-        :args (s/cat :kafka-config ::kafka-config
-                     :topic ::topic
+        :args (s/cat :topic ::topic
                      :args (s/* (s/alt :deserializer (s/cat :opt #(= % :deserializer) :value ::dser/deserializer))))
         :ret map?)
 
@@ -498,21 +496,22 @@
   |:---------------------|:--------|:------------|
   | `:partition`         | `nil`   | Limit consumption to a specific partition. |
   | `:deserializer`      | `nil`   | Deserializer to use to deserialize the message value. Will create an avro-deserializer if not specified (or nippy-deserializer if topic name contains the word 'internal'). |"
-  [kafka-config topic offset & {:keys [deserializer partition]
-                                :or   {deserializer nil
-                                       partition    nil}}]
-  (let [args (concat [kafka-config topic
-                      :offset (dec offset)
-                      :limit 1
-                      :filter-fn #(= offset (:offset (meta %)))]
-                     (when (some? partition) [:partition partition])
-                     (when (some? deserializer) [:deserializer deserializer]))
-        ch   (apply consume args)
-        f    (future
-               (loop [m (ch/poll! ch)]
-                 (if m
-                   m
-                   (recur (ch/poll! ch)))))]
+  [topic offset & {:keys [deserializer partition]
+                   :or   {deserializer nil
+                          partition    nil}}]
+  (let [kafka-config (:kafka-config *config*)
+        args         (concat [kafka-config topic
+                              :offset (dec offset)
+                              :limit 1
+                              :filter-fn #(= offset (:offset (meta %)))]
+                             (when (some? partition) [:partition partition])
+                             (when (some? deserializer) [:deserializer deserializer]))
+        ch           (apply consume args)
+        f            (future
+                       (loop [m (ch/poll! ch)]
+                         (if m
+                           m
+                           (recur (ch/poll! ch)))))]
     (try
       (deref f 5000 nil)
       (finally
@@ -520,8 +519,7 @@
         (ch/close! ch)))))
 
 (s/fdef get-message
-        :args (s/cat :kafka-config ::kafka-config
-                     :topic ::topic
+        :args (s/cat :topic ::topic
                      :offset ::offset-specification
                      :args (s/* (s/alt :deserializer (s/cat :opt #(= % :deserializer) :value ::dser/deserializer)
                                        :partition (s/cat :opt #(= % :partition) :value ::partition))))
@@ -534,10 +532,11 @@
   |:-------------------|:--------|:------------|
   | `:key-serializer`  | `nil`   | Serializer to use to serialize the message key. Will use a string deserializer if not specified. |
   | `:value-serializer`| `nil`   | Serializer to use to serialize the message value. Will use an edn serializer if not specified. |"
-  ([kafka-config topic & {:keys [key-serializer value-serializer]
-                          :or   {key-serializer   default-key-serializer
-                                 value-serializer default-value-serializer}}]
-   (let [producer-config (normalize-config kafka-config)
+  ([topic & {:keys [key-serializer value-serializer]
+             :or   {key-serializer   default-key-serializer
+                    value-serializer default-value-serializer}}]
+   (let [kafka-config    (:kafka-config *config*)
+         producer-config (normalize-config kafka-config)
          producer        (KafkaProducer. producer-config key-serializer value-serializer)
          ch              (async/chan)]
 
@@ -558,8 +557,7 @@
      ch)))
 
 (s/fdef produce
-        :args (s/cat :kafka-config ::kafka-config
-                     :topic ::topic
+        :args (s/cat :topic ::topic
                      :args (s/* (s/alt :key-serializer (s/cat :opt #(= % :key-serializer) :value ::ser/serializer)
                                        :value-serializer (s/cat :opt #(= % :value-serializer) :value ::ser/serializer))))
         :ret ::ch/channel)

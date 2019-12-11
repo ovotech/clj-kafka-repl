@@ -33,8 +33,7 @@
                                      [vise890/zookareg "2.1.0-2"]]
 
                     :eftest         {:multithread? false}
-                    :source-paths   ["dev/clj"]
-                    :resource-paths ["dev/resources" "test/resources"]
+                    :resource-paths ["test/resources"]
                     :plugins        [[lein-eftest "0.4.2"]]
 
                     :repl-options   {:init-ns user}}})

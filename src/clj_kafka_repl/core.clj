@@ -1,23 +1,19 @@
 (ns clj-kafka-repl.core
-  (:require [clojure.java.io :as io]
-            [aero.core :as aero]))
+  (:require [clojure.edn :as edn]))
 
-(def ^:dynamic *profile* nil)
+(def ^:dynamic *config* nil)
+(def all-config (atom nil))
 
-(defmacro with-profile
-  "Commands enclosed will be executed in the context of the specified profile."
+(defn load-config
+  []
+  (let [path (str (System/getProperty "user.home") "/.clj-kafka-repl/config.edn")]
+    (reset! all-config (-> path slurp edn/read-string))))
+
+(defmacro with
   [profile & body]
-  `(binding [*profile* ~profile]
-     (let [result# ~@body]
-       (if (seq? result#)
-         (vec result#)
-         result#))))
+  `(binding [*config* (get (deref all-config) ~profile)]
+     ~@body))
 
-(def get-config
-  (memoize
-    (fn [profile]
-      (-> (System/getProperty "user.home")
-          (str "/.clj-kafka-repl/config.edn")
-          io/file
-          (aero/read-config {:profile profile})))))
+
+
 

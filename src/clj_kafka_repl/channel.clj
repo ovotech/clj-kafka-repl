@@ -3,7 +3,9 @@
             [clojure.core.async.impl.protocols :as async-protocols]
             [clojure.java.io :as io]
             [clojure.spec.alpha :as s]
-            [puget.printer :as puget]))
+            [puget.printer :as puget])
+  (:import (java.io PrintWriter)
+           (clojure.lang Atom)))
 
 (s/def ::progress-fn fn?)
 (s/def ::channel #(satisfies? async-protocols/Channel %))
@@ -35,61 +37,47 @@
 (s/fdef closed?
         :args (s/cat :tracked-channel ::tracked-channel))
 
-(defn to-file
-  "Streams the contents of the specified channel to the given file path."
-  [{:keys [channel]} f]
-  (future
-    (with-open [w (io/writer (io/file f))]
-      (loop [next (async/<!! channel)]
-        (when next
-          (clojure.pprint/pprint next w)
-          (recur (async/<!! channel)))))))
+(defn- loop-channel
+  [channel fn]
+  (loop [next (async/<!! channel)]
+    (when next
+      (fn next)
+      (recur (async/<!! channel)))))
 
-(s/fdef to-file
-        :args (s/cat :tracked-channel ::tracked-channel
-                     :f string?))
+(defmulti to (fn [_ target] (type target)))
+
+(defmethod to PrintWriter [{:keys [channel]} writer]
+  (future
+    (binding [*out* writer]
+      (loop-channel channel #(puget/pprint % {:print-color true})))))
+
+(defmethod to String [{:keys [channel]} file-path]
+  (future
+    (with-open [w (io/writer (io/file file-path))]
+      (loop-channel channel #(clojure.pprint/pprint % w)))))
+
+(defmethod to Atom [{:keys [channel]} a]
+  (future
+    (loop-channel channel #(swap! a conj %))))
 
 (defn to-stdout
   "Streams the contents of the specified to stdout."
-  [{:keys [channel]} & {:keys [print]
-                        :or   {print #(puget/pprint % {:print-color true})}}]
-  (future
-    (loop [next (async/<!! channel)]
-      (when next
-        (print next)
-        (recur (async/<!! channel))))))
+  [{:keys [channel]}]
+  (to channel *out*))
 
 (s/fdef to-stdout
         :args (s/cat :tracked-channel ::tracked-channel
                      :options (s/* (s/alt :print (s/cat :opt #(= % :print)
                                                         :value fn?)))))
 
-(defn dump!
-  "Returns the entire contents of the channel. Will refuse if the channel is not closed."
-  [{:keys [channel] :as tracked-channel}]
-  (if (closed? tracked-channel)
-    (->> channel
-         (async/into [])
-         (async/<!!))
-    :channel-not-closed))
+(defn to-file
+  "Streams the contents of the specified channel to the given file path."
+  [{:keys [channel]} f]
+  (to channel f))
 
-(s/fdef dump!
-        :args (s/cat :tracked-channel ::tracked-channel)
-        :ret (s/or :success (s/coll-of any?)
-                   :failure keyword?))
-
-(defn seek-to-end!
-  "Polls channel until no more messages are found."
-  [{:keys [channel]}]
-  (while
-    (deref
-      (future (async/<!! channel))
-      1000 nil))
-  :done)
-
-(s/fdef seek-to-end!
-        :args (s/cat :tracked-channel ::tracked-channel)
-        :ret keyword?)
+(s/fdef to-file
+        :args (s/cat :tracked-channel ::tracked-channel
+                     :f string?))
 
 (defn progress
   "Gives an indication of the progress of the given tracked channel on its partitions."

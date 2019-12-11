@@ -3,7 +3,8 @@
             [kafka-avro-confluent.deserializers :refer [->avro-deserializer]]
             [kafka-avro-confluent.schema-registry-client :refer [->schema-registry-client]]
             [clj-nippy-serde.serialization :refer [nippy-deserializer]]
-            [clojure.spec.alpha :as s])
+            [clojure.spec.alpha :as s]
+            [clj-kafka-repl.core :refer [*config*]])
   (:import (org.apache.kafka.common.serialization Deserializer StringDeserializer)
            (java.nio.charset StandardCharsets)))
 
@@ -35,8 +36,8 @@
 (defmethod new-deserializer :nippy [_]
   (nippy-deserializer))
 
-(defmethod new-deserializer :avro [_ schema-registry-config]
-  (-> schema-registry-config
+(defmethod new-deserializer :avro [_]
+  (-> (:schema-registry-config *config*)
       ->schema-registry-client
       ->avro-deserializer))
 
