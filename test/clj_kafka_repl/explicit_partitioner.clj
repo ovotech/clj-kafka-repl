@@ -2,7 +2,7 @@
   (:import (org.apache.kafka.clients.producer Partitioner)))
 
 (gen-class
-  :name energy_contracts_tools.test_utils.ExplicitPartitioner
+  :name clj_kafka_repl.ExplicitPartitioner
   :implements [org.apache.kafka.clients.producer.Partitioner]
   :state state
   :init init

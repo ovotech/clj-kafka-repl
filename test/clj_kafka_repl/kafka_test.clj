@@ -1,7 +1,7 @@
 (ns clj-kafka-repl.kafka-test
   (:require [clojure.test :refer :all]
-            [energy-contracts-tools.core :as core]
-            [energy-contracts-tools.confirm :as confirm]
+            [clj-kafka-repl.core :as core]
+            [clj-kafka-repl.confirm :as confirm]
             [clj-kafka-repl.kafka :as sut]
             [clj-kafka-repl.kafka-utils :as kafka :refer [ensure-topic]]
             [clj-kafka-repl.test-utils :refer [random-id with-edn-producer with-edn-consumer init-logging!]]
@@ -9,14 +9,15 @@
             [zookareg.core :as zkr]))
 
 (def kafka-config {:bootstrap.servers "127.0.0.1:9092"
-                   :partitioner.class "energy_contracts_tools.test_utils.ExplicitPartitioner"})
+                   :partitioner.class "clj_kafka_repl.ExplicitPartitioner"})
 
 (use-fixtures
   :once
   (fn [f]
     (init-logging!)
 
-    (with-redefs [core/get-config (constantly {:kafka-config kafka-config})]
+    (binding [core/*config* {:kafka-config kafka-config}
+              core/*options* {}]
       (zkr/with-zookareg-fn f))))
 
 (deftest can-set-group-offsets-to-start

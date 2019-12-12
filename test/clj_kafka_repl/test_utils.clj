@@ -1,9 +1,10 @@
 (ns clj-kafka-repl.test-utils
   (:require [clojure.edn :as edn]
-            [energy-contracts-kafka-utils.test-core :as tc :refer [with-producer with-consumer]])
+            [clj-kafka-repl.kafka-utils :refer [with-producer with-consumer]]
+            [clj-kafka-repl.test-utils])
   (:import (java.util UUID)
            (org.apache.kafka.common.serialization Deserializer Serializer StringSerializer StringDeserializer)
-           (org.slf4j.bridge SLF4JBridgeHandler)))
+           org.slf4j.bridge.SLF4JBridgeHandler))
 
 (defn random-id
   []

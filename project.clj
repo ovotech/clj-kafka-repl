@@ -1,15 +1,16 @@
 (defproject clj-kafka-repl "0.1.0"
   :dependencies [[aero "1.1.3"]
                  [bigsy/clj-nippy-serde "0.1.0"]
-                 [cheshire "5.8.1"]
+                 [cheshire "5.9.0"]
                  [clojure.java-time "0.3.2"]
                  [clojure-term-colors "0.1.0"]
                  [org.apache.kafka/kafka-clients "2.3.0"]
                  [org.clojure/clojure "1.10.1"]
-                 [org.clojure/core.async "0.4.500"]
+                 [org.clojure/core.async "0.6.532"]
                  [org.clojure/tools.logging "0.5.0"]
-                 [org.slf4j/slf4j-api "1.7.26"]
-                 [ovotech/kafka-avro-confluent "2.1.0-3"]]
+                 [org.slf4j/slf4j-api "1.7.29"]
+                 [org.slf4j/jul-to-slf4j "1.7.29"]
+                 [ovotech/kafka-avro-confluent "2.1.0-4"]]
 
   :plugins [[mvxcvi/whidbey "2.0.0"]
             [lein-codox "0.10.5"]]
@@ -19,6 +20,8 @@
   :codox {:output-path "docs"
           :metadata    {:doc/format :markdown}
           :project     {:name "clj-kafka-repl", :version nil, :package nil}}
+
+  :aot [clj-kafka-repl.explicit-partitioner]
 
   :repl-options {:welcome (println
                             (str
@@ -30,7 +33,7 @@
 
   :profiles {:dev  {:dependencies   [[ch.qos.logback/logback-classic "1.2.3"]
                                      [ch.qos.logback/logback-core "1.2.3"]
-                                     [vise890/zookareg "2.1.0-2"]]
+                                     [vise890/zookareg "2.3.0-1"]]
 
                     :eftest         {:multithread? false}
                     :resource-paths ["test/resources"]

@@ -2,16 +2,20 @@
   (:require [clojure.edn :as edn]))
 
 (def ^:dynamic *config* nil)
+(def ^:dynamic *options* nil)
+
 (def all-config (atom nil))
 
 (defn load-config
   []
   (let [path (str (System/getProperty "user.home") "/.clj-kafka-repl/config.edn")]
-    (reset! all-config (-> path slurp edn/read-string))))
+    (reset! all-config (-> path slurp (edn/read-string )))))
 
 (defmacro with
   [profile & body]
-  `(binding [*config* (get (deref all-config) ~profile)]
+  `(binding [*options* (-> (deref all-config)
+                           (dissoc :profiles))
+             *config* (get-in (deref all-config) [:profiles ~profile])]
      ~@body))
 
 

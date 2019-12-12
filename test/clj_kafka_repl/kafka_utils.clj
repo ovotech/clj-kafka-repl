@@ -2,8 +2,7 @@
   (:require [clj-kafka-repl.kafka :refer [normalize-config]]
             [kafka-avro-confluent.deserializers :refer [->avro-deserializer]]
             [kafka-avro-confluent.serializers :refer [->avro-serializer]]
-            [clj-nippy-serde.serialization :as nser]
-            [again.core :as again])
+            [clj-nippy-serde.serialization :as nser])
   (:import (org.apache.kafka.common.serialization StringDeserializer StringSerializer)
            (org.apache.kafka.clients.consumer KafkaConsumer)
            (java.util UUID Properties)
@@ -33,7 +32,8 @@
 (defn with-consumer
   [kafka-config value-deserializer topic group-id partition-count f & {:keys [seek-to]
                                                                        :or   {seek-to :end}}]
-  (let [consumer-config  (-> (merge kafka-config {:group.id group-id})
+  (let [consumer-config  (-> kafka-config
+                             (assoc :group.id group-id)
                              normalize-config)
         key-deserializer (StringDeserializer.)
         consumer         (KafkaConsumer. consumer-config
