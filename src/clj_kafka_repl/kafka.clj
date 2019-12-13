@@ -102,7 +102,7 @@
         cc           (-> kafka-config
                          (merge {:group.id group-id})
                          normalize-config)
-        new-consumer (KafkaConsumer. cc (new-deserializer :string) (new-deserializer :string))
+        new-consumer (KafkaConsumer. cc (new-deserializer :noop) (new-deserializer :noop))
         tp           (TopicPartition. topic-name partition)]
     (try
       (some-> (.committed new-consumer tp)
@@ -122,7 +122,7 @@
   (let [topic-name   (->topic-name topic)
         kafka-config (:kafka-config *config*)
         cc           (normalize-config kafka-config)
-        new-consumer (KafkaConsumer. cc (new-deserializer :string) (new-deserializer :string))]
+        new-consumer (KafkaConsumer. cc (new-deserializer :noop) (new-deserializer :noop))]
     (try
       (->> (.partitionsFor new-consumer topic-name)
            (map #(.partition %))
@@ -148,7 +148,7 @@
   (let [topic-name       (->topic-name topic)
         kafka-config     (:kafka-config *config*)
         cc               (normalize-config kafka-config)
-        new-consumer     (KafkaConsumer. cc (new-deserializer :string) (new-deserializer :string))
+        new-consumer     (KafkaConsumer. cc (new-deserializer :noop) (new-deserializer :noop))
         topic-partitions (map #(TopicPartition. topic-name %)
                               (or partitions (get-topic-partitions topic-name)))]
     (try
@@ -179,7 +179,7 @@
   (let [topic-name       (->topic-name topic)
         kafka-config     (:kafka-config *config*)
         cc               (normalize-config kafka-config)
-        new-consumer     (KafkaConsumer. cc (new-deserializer :string) (new-deserializer :string))
+        new-consumer     (KafkaConsumer. cc (new-deserializer :noop) (new-deserializer :noop))
         topic-partitions (map #(TopicPartition. topic-name %)
                               (or partitions (get-topic-partitions topic-name)))]
     (try
