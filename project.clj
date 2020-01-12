@@ -1,4 +1,4 @@
-(defproject clj-kafka-repl "0.1.0"
+(defproject ovotech/clj-kafka-repl "0.1.0"
   :dependencies [[aero "1.1.3"]
                  [bigsy/clj-nippy-serde "0.1.0"]
                  [cheshire "5.9.0"]
