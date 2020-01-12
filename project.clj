@@ -4,6 +4,7 @@
                  [cheshire "5.9.0"]
                  [clojure.java-time "0.3.2"]
                  [clojure-term-colors "0.1.0"]
+                 [mvxcvi/puget "1.2.0"]
                  [org.apache.kafka/kafka-clients "2.3.0"]
                  [org.clojure/clojure "1.10.1"]
                  [org.clojure/core.async "0.6.532"]
