@@ -5,8 +5,8 @@
             [clojure.java.io :as io]
             [clojure.spec.alpha :as s]
             [puget.printer :as puget])
-  (:import (java.io PrintWriter)
-           (clojure.lang Atom)))
+  (:import (clojure.lang Atom)
+           (java.io PrintWriter)))
 
 (s/def ::progress-fn fn?)
 (s/def ::channel #(satisfies? async-protocols/Channel %))

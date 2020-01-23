@@ -1,12 +1,12 @@
 (ns user
-  (:require [clojure.repl :refer [dir-fn]]
-            [clojure.spec.test.alpha :as stest]
-            [clojure.term.colors :refer [cyan yellow green magenta]]
-            [clj-kafka-repl.kafka :as kafka]
-            [clj-kafka-repl.channel :as ch]
-            [clj-kafka-repl.deserialization :as dser]
-            [clj-kafka-repl.serialization :as ser]
+  (:require [clj-kafka-repl.channel :as ch]
             [clj-kafka-repl.core :refer [load-config with]]
+            [clj-kafka-repl.deserialization :as dser]
+            [clj-kafka-repl.kafka :as kafka]
+            [clj-kafka-repl.serialization :as ser]
+            [clojure.repl :refer [dir-fn]]
+            [clojure.spec.test.alpha :as stest]
+            [clojure.term.colors :refer [cyan green magenta yellow]]
             [kaocha.repl :as kaocha]))
 
 (defn get-namespace-functions

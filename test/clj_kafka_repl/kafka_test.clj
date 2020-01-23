@@ -1,11 +1,11 @@
 (ns clj-kafka-repl.kafka-test
-  (:require [clojure.test :refer :all]
+  (:require [clj-kafka-repl.confirm :as confirm]
             [clj-kafka-repl.core :as core]
-            [clj-kafka-repl.confirm :as confirm]
+            [clj-kafka-repl.explicit-partitioner :as ep]
             [clj-kafka-repl.kafka :as sut]
             [clj-kafka-repl.kafka-utils :as kafka :refer [ensure-topic]]
-            [clj-kafka-repl.test-utils :refer [random-id with-edn-producer with-edn-consumer init-logging!]]
-            [clj-kafka-repl.explicit-partitioner :as ep]
+            [clj-kafka-repl.test-utils :refer [init-logging! random-id with-edn-consumer with-edn-producer]]
+            [clojure.test :refer :all]
             [zookareg.core :as zkr]))
 
 (def kafka-config {:bootstrap.servers "127.0.0.1:9092"})

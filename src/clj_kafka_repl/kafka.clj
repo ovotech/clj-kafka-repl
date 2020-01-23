@@ -1,21 +1,21 @@
 (ns clj-kafka-repl.kafka
   "Functions for consuming, producing and reading metadata from kafka."
-  (:require [clojure.spec.alpha :as s]
+  (:require [clj-kafka-repl.channel :as ch]
             [clj-kafka-repl.confirm :refer [with-confirmation]]
-            [clj-kafka-repl.channel :as ch]
             [clj-kafka-repl.confirm :refer [with-confirmation] :as confirm]
+            [clj-kafka-repl.core :refer [*config* *options*]]
             [clj-kafka-repl.deserialization :as dser :refer [new-deserializer]]
             [clj-kafka-repl.serialization :as ser :refer [new-serializer]]
-            [clj-kafka-repl.core :refer [*config* *options*]]
             [clojure.core.async :as async]
             [clojure.core.async.impl.protocols :as async-protocols]
+            [clojure.spec.alpha :as s]
             [clojure.tools.logging :as log]
             [java-time :as jt])
-  (:import (org.apache.kafka.clients.consumer KafkaConsumer)
-           (org.apache.kafka.common TopicPartition)
+  (:import (java.util UUID)
            (java.util.concurrent TimeUnit)
-           (java.util UUID)
-           (org.apache.kafka.clients.producer ProducerRecord KafkaProducer)))
+           (org.apache.kafka.clients.consumer KafkaConsumer)
+           (org.apache.kafka.clients.producer KafkaProducer ProducerRecord)
+           (org.apache.kafka.common TopicPartition)))
 
 (def ^:private max-poll-records 500)
 

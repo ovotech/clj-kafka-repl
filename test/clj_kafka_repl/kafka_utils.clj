@@ -1,20 +1,20 @@
 (ns clj-kafka-repl.kafka-utils
   (:require [clj-kafka-repl.kafka :refer [normalize-config]]
-            [kafka-avro-confluent.deserializers :refer [->avro-deserializer]]
-            [kafka-avro-confluent.serializers :refer [->avro-serializer]]
             [clj-nippy-serde.serialization :as nser]
-            [clojure.tools.logging :as log])
-  (:import (org.apache.kafka.common.serialization StringDeserializer StringSerializer)
-           (org.apache.kafka.clients.consumer KafkaConsumer)
-           (java.util UUID Properties)
-           (kafka.admin AdminUtils RackAwareMode$Enforced$)
-           (kafka.utils ZkUtils ZKStringSerializer$)
-           (org.I0Itec.zkclient ZkConnection ZkClient)
-           (org.apache.kafka.common TopicPartition)
-           (org.apache.kafka.clients.producer KafkaProducer ProducerRecord)
+            [clojure.tools.logging :as log]
+            [kafka-avro-confluent.deserializers :refer [->avro-deserializer]]
+            [kafka-avro-confluent.serializers :refer [->avro-serializer]])
+  (:import (java.time Duration)
+           (java.util Properties UUID)
            (java.util UUID)
-           (java.time Duration)
-           (org.apache.kafka.clients.admin KafkaAdminClient)))
+           (kafka.admin AdminUtils RackAwareMode$Enforced$)
+           (kafka.utils ZKStringSerializer$ ZkUtils)
+           (org.apache.kafka.clients.admin KafkaAdminClient)
+           (org.apache.kafka.clients.consumer KafkaConsumer)
+           (org.apache.kafka.clients.producer KafkaProducer ProducerRecord)
+           (org.apache.kafka.common TopicPartition)
+           (org.apache.kafka.common.serialization StringDeserializer StringSerializer)
+           (org.I0Itec.zkclient ZkClient ZkConnection)))
 
 (def ^:dynamic *convert-logical-types?* false)
 

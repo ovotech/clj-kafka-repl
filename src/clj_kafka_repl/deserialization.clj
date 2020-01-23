@@ -1,12 +1,12 @@
 (ns clj-kafka-repl.deserialization
-  (:require [clojure.edn :as edn]
-            [kafka-avro-confluent.deserializers :refer [->avro-deserializer]]
-            [kafka-avro-confluent.schema-registry-client :refer [->schema-registry-client]]
+  (:require [clj-kafka-repl.core :refer [*config*]]
             [clj-nippy-serde.serialization :refer [nippy-deserializer]]
+            [clojure.edn :as edn]
             [clojure.spec.alpha :as s]
-            [clj-kafka-repl.core :refer [*config*]])
-  (:import (org.apache.kafka.common.serialization Deserializer StringDeserializer)
-           (java.nio.charset StandardCharsets)))
+            [kafka-avro-confluent.deserializers :refer [->avro-deserializer]]
+            [kafka-avro-confluent.schema-registry-client :refer [->schema-registry-client]])
+  (:import (java.nio.charset StandardCharsets)
+           (org.apache.kafka.common.serialization Deserializer StringDeserializer)))
 
 (s/def ::deserializer #(instance? Deserializer %))
 

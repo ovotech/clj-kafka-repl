@@ -1,11 +1,11 @@
 (ns clj-kafka-repl.serialization
-  (:require [kafka-avro-confluent.serializers :refer [->avro-serializer]]
-            [kafka-avro-confluent.schema-registry-client :refer [->schema-registry-client]]
+  (:require [clj-kafka-repl.core :refer [*config*]]
             [clj-nippy-serde.serialization :refer [nippy-deserializer nippy-serializer]]
             [clojure.spec.alpha :as s]
-            [clj-kafka-repl.core :refer [*config*]])
-  (:import (org.apache.kafka.common.serialization Serializer StringSerializer)
-           (java.nio.charset StandardCharsets)))
+            [kafka-avro-confluent.schema-registry-client :refer [->schema-registry-client]]
+            [kafka-avro-confluent.serializers :refer [->avro-serializer]])
+  (:import (java.nio.charset StandardCharsets)
+           (org.apache.kafka.common.serialization Serializer StringSerializer)))
 
 (s/def ::serializer #(instance? Serializer %))
 
