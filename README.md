@@ -1,7 +1,7 @@
 clj-kafka-repl
 ==============
 
-General purpose REPL functions for interrogating Kafka.
+General purpose Clojure REPL functions for interrogating Kafka.
 
 [API](https://ovotech.github.io/clj-kafka-repl/)
 
