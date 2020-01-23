@@ -509,7 +509,7 @@
         :ret ::ch/tracked-channel)
 
 (defn sample
-  "Convenience function around kafka/consume to just sample a message from the topic."
+  "Convenience function around [[kafka/consume]] to just sample a message from the topic."
   [topic & opts]
   (let [topic-name (->topic-name topic)
         c          (apply consume (concat [topic-name :limit 1 :offset :start] opts))]
