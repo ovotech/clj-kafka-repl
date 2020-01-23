@@ -1,5 +1,5 @@
 (defproject ovotech/clj-kafka-repl "0.1.0"
-  :dependencies [[aero "1.1.4"]
+  :dependencies [[aero "1.1.5"]
                  [bigsy/clj-nippy-serde "0.1.0"]
                  [cheshire "5.9.0"]
                  [clojure.java-time "0.3.2"]
@@ -13,7 +13,7 @@
                  [org.slf4j/jul-to-slf4j "1.7.30"]
                  [org.slf4j/log4j-over-slf4j "1.7.30"]
                  [org.slf4j/slf4j-api "1.7.30"]
-                 [ovotech/kafka-avro-confluent "2.1.0-4"]]
+                 [ovotech/kafka-avro-confluent "2.1.0-5"]]
 
   :plugins [[mvxcvi/whidbey "2.0.0"]
             [lein-codox "0.10.7"]]
@@ -40,7 +40,7 @@
 
   :profiles {:dev  {:dependencies   [[ch.qos.logback/logback-classic "1.2.3"]
                                      [ch.qos.logback/logback-core "1.2.3"]
-                                     [lambdaisland/kaocha "0.0-554"]
+                                     [lambdaisland/kaocha "0.0-581"]
                                      [vise890/zookareg "2.3.0-1"]]
 
                     :eftest         {:multithread? false}
