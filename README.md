@@ -15,17 +15,14 @@ The functionality provided in the `kafka` namespace can be split as follows:
  [get-group-offset](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-group-offsets), 
  [get-earliest-offsets](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-earliest-offsets),
  [get-latest-offsets](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-latest-offsets),
- [set-group-offsets!](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-set-group-offsets!),
- [get-lag](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-lag),
+ [set-group-offsets!](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-set-group-offsets!)
 * Consuming: [consume](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-consume), 
  [sample](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-sample),
  [get-message](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-message),
  [get-topic-partitions](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-topic-partitions),
-* Producing: [produce](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-produce) 
-
-The core.async functionality in the [ch namespace](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.channel.html)
-is intended for use with the [consume](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-consume)
-function.
+* Producing: [produce](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-produce)
+* Miscellaneous: [get-lag](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-lag),
+ [get-topics](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-topics) 
 
 Getting started
 ---------------

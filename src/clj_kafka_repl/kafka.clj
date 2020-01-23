@@ -546,7 +546,7 @@
   | `:value-deserializer` | `nil`   | Deserializer to use to deserialize the message value. |"
   [topic offset & {:keys [value-deserializer partition]
                    :or   {value-deserializer nil
-                          partition    nil}}]
+                          partition          nil}}]
   (let [topic-name (->topic-name topic)
         args       (concat [topic-name
                             :offset (dec offset)
@@ -611,3 +611,27 @@
                      :args (s/* (s/alt :key-serializer (s/cat :opt #(= % :key-serializer) :value ::ser/serializer)
                                        :value-serializer (s/cat :opt #(= % :value-serializer) :value ::ser/serializer))))
         :ret ::ch/channel)
+
+(defn get-topics
+  "Lists the names of all topics.
+
+  | key        | default | description |
+  |:-----------|:--------|:------------|
+  | `:search`  | `nil`   | String to filter topics on. Only topic names containing the string will be returned. |"
+  [& {:keys [search]}]
+  (let [kafka-config (-> (:kafka-config *config*)
+                         (assoc :request.timeout.ms 10000))
+        cc           (-> kafka-config
+                         normalize-config)
+        deserializer (dser/new-deserializer :string)]
+
+    (with-open [c (KafkaConsumer. cc deserializer deserializer)]
+      (->> (.listTopics c)
+           (keys)
+           (filter #(or (not search)
+                        (clojure.string/includes? % search)))
+           (sort)))))
+
+(s/fdef get-topics
+        :args (s/cat :args (s/* (s/alt :search (s/cat :opt #(= % :search) :value ::non-blank-string))))
+        :ret (s/coll-of ::non-blank-string))
