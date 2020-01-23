@@ -356,13 +356,10 @@
 
   - Pop the next message (if any) from the channel:
     ([[ch/poll!]] tc)
-
   - Stream channel to file:
     ([[ch/to-file]] tc \"/workspace/temp/your-file\")
-
   - Stream channel to stdout:
     ([[ch/to-stdout]] tc)
-
   - And then close the channel with:
     ([[ch/close!]] tc)
 
