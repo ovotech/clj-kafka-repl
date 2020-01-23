@@ -1,5 +1,6 @@
 clj-kafka-repl
 ==============
+> This is still a work in progress and should be considered very much "alpha" for now.
 
 General purpose Clojure REPL functions for interrogating Kafka.
 
