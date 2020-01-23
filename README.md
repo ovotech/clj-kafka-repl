@@ -84,3 +84,17 @@ serialize/deserialize as strings):
 
  :profiles {...}}
 ```
+
+Running tests
+-------------
+> There are *very* limited tests right now - we're working on building them up DDT-style...
+
+```
+lein kaocha
+```
+
+or, from the REPL itself:
+
+```
+(run-tests)
+```

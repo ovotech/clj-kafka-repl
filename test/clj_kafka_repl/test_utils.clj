@@ -25,7 +25,7 @@
 (defn with-edn-producer
   [kafka-config f]
   (with-producer kafka-config edn-serializer f))
-\
+
 (defn with-edn-consumer
   [kafka-config topic group-id seek-to f]
   (with-consumer kafka-config edn-deserializer topic group-id nil f :seek-to seek-to))

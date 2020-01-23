@@ -7,7 +7,7 @@
         </encoder>
 
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
+            <level>DEBUG</level>
         </filter>
     </appender>
 
@@ -22,7 +22,7 @@
     <logger name="zookareg.core" level="WARN" />
     <logger name="org.hibernate" level="WARN" />
 
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="CONSOLE"/>
     </root>
 

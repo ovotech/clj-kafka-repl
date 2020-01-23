@@ -1,0 +1,5 @@
+#kaocha/v1
+    {:kaocha.plugin.junit-xml/target-file "target/test-results/kaocha/results.xml"
+     :reporter                            kaocha.report/dots
+     :plugins                             [:kaocha.plugin/profiling]
+     :fail-fast?                          true}

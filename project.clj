@@ -9,14 +9,19 @@
                  [org.clojure/clojure "1.10.1"]
                  [org.clojure/core.async "0.7.559"]
                  [org.clojure/tools.logging "0.5.0"]
-                 [org.slf4j/slf4j-api "1.7.30"]
+                 [org.slf4j/jcl-over-slf4j "1.7.30"]
                  [org.slf4j/jul-to-slf4j "1.7.30"]
+                 [org.slf4j/log4j-over-slf4j "1.7.30"]
+                 [org.slf4j/slf4j-api "1.7.30"]
                  [ovotech/kafka-avro-confluent "2.1.0-4"]]
 
   :plugins [[mvxcvi/whidbey "2.0.0"]
             [lein-codox "0.10.7"]]
 
   :middleware [whidbey.plugin/repl-pprint]
+
+  :aliases {"kaocha" ["run" "-m" "kaocha.runner"]
+            "org"    ["nsorg" "--replace"]}
 
   :codox {:output-path "docs"
           :namespaces  [clj-kafka-repl.kafka clj-kafka-repl.channel]
@@ -35,6 +40,7 @@
 
   :profiles {:dev  {:dependencies   [[ch.qos.logback/logback-classic "1.2.3"]
                                      [ch.qos.logback/logback-core "1.2.3"]
+                                     [lambdaisland/kaocha "0.0-554"]
                                      [vise890/zookareg "2.3.0-1"]]
 
                     :eftest         {:multithread? false}

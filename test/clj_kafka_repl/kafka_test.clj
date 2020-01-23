@@ -8,8 +8,9 @@
             [clj-kafka-repl.explicit-partitioner :as ep]
             [zookareg.core :as zkr]))
 
-(def kafka-config {:bootstrap.servers "127.0.0.1:9092"
-                   :partitioner.class "clj_kafka_repl.ExplicitPartitioner"})
+(def kafka-config {:bootstrap.servers "127.0.0.1:9092"})
+(def producer-config (assoc kafka-config
+                       :partitioner.class "clj_kafka_repl.ExplicitPartitioner"))
 
 (use-fixtures
   :once
@@ -27,7 +28,7 @@
 
     ; AND some messages pushed to the topic across all partitions
     (with-edn-producer
-      kafka-config
+      producer-config
       (fn [producer]
         (kafka/produce producer topic [(ep/m->to-explicit-partitionable {:value "message1-0"} 0)
                                        (ep/m->to-explicit-partitionable {:value "message1-1"} 1)
@@ -59,7 +60,7 @@
 
     ; AND some messages pushed to the topic across all partitions
     (with-edn-producer
-      kafka-config
+      producer-config
       (fn [producer]
         (kafka/produce producer topic [(ep/m->to-explicit-partitionable {:value "message1-0"} 0)
                                        (ep/m->to-explicit-partitionable {:value "message1-1"} 1)])))
@@ -78,7 +79,7 @@
           (.commitSync consumer)))
 
       ; THEN the offsets are successfully reset to the end of the topic
-      (is (= [[0 1] [1 1]] (sut/get-group-offsets kafka-config topic group-id))))))
+      (is (= [[0 1] [1 1]] (sut/get-group-offsets topic group-id))))))
 
 (deftest can-set-group-offset-to-absolute-offset
   (let [topic (random-id)]
@@ -87,7 +88,7 @@
 
     ; AND some messages pushed to the topic across all partitions
     (with-edn-producer
-      kafka-config
+      producer-config
       (fn [producer]
         (kafka/produce producer topic [(ep/m->to-explicit-partitionable {:value "message1-0"} 0)
                                        (ep/m->to-explicit-partitionable {:value "message1-1"} 1)
@@ -115,7 +116,7 @@
         (fn [consumer]
           (let [events (kafka/poll* consumer :expected-msgs 3)]
             (is (= 3 (count events)))
-            (is (= #{"message1-1" "message2-0" "message2-1"}) (set (map :value events)))))))))
+            (is (= #{"message1-1" "message2-0" "message2-1"} (set (map :value events))))))))))
 
 (deftest can-set-group-offsets-to-relative-offsets
   (let [topic (random-id)]
@@ -124,7 +125,7 @@
 
     ; AND some messages pushed to the topic across all partitions
     (with-edn-producer
-      kafka-config
+      producer-config
       (fn [producer]
         (kafka/produce producer topic [(ep/m->to-explicit-partitionable {:value "message1-0"} 0)
                                        (ep/m->to-explicit-partitionable {:value "message1-1"} 1)
@@ -152,4 +153,4 @@
         (fn [consumer]
           (let [events (kafka/poll* consumer)]
             (is (= 1 (count events)))
-            (is (= #{"message2-0"}) (set (map :value events)))))))))
+            (is (= #{"message2-0"} (set (map :value events))))))))))

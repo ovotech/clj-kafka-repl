@@ -2,7 +2,8 @@
   (:require [clj-kafka-repl.kafka :refer [normalize-config]]
             [kafka-avro-confluent.deserializers :refer [->avro-deserializer]]
             [kafka-avro-confluent.serializers :refer [->avro-serializer]]
-            [clj-nippy-serde.serialization :as nser])
+            [clj-nippy-serde.serialization :as nser]
+            [clojure.tools.logging :as log])
   (:import (org.apache.kafka.common.serialization StringDeserializer StringSerializer)
            (org.apache.kafka.clients.consumer KafkaConsumer)
            (java.util UUID Properties)
@@ -137,6 +138,7 @@
      (let [[k v] (if (vector? r)
                    r
                    [(str (UUID/randomUUID)) r])]
+       (log/debugf "Producing record %s to key %s on topic %s." v k topic)
        (deref
          (.send producer
                 (ProducerRecord. topic k v)))))

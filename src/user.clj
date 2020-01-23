@@ -6,7 +6,8 @@
             [clj-kafka-repl.channel :as ch]
             [clj-kafka-repl.deserialization :as dser]
             [clj-kafka-repl.serialization :as ser]
-            [clj-kafka-repl.core :refer [load-config with]]))
+            [clj-kafka-repl.core :refer [load-config with]]
+            [kaocha.repl :as kaocha]))
 
 (defn get-namespace-functions
   [ns]
@@ -38,6 +39,12 @@
        (println)))
 
    (println)))
+
+(defn run-tests
+  [& [ns]]
+  (if ns
+    (kaocha/run ns)
+    (kaocha/run-all {:reporter [kaocha.report/dots]})))
 
 (stest/instrument)
 (load-config)

@@ -44,6 +44,8 @@
                      :string ::non-blank-string))
 (s/def ::partition nat-int?)
 (s/def ::offset nat-int?)
+(s/def ::partition-offset (s/tuple ::partition ::offset))
+
 (s/def ::offset-specification (s/or :absolute ::offset
                                     :relative neg-int?
                                     :keyword #{:start :end}
@@ -214,7 +216,7 @@
 
 (defn- set-group-offset!
   "Set the offset for the specified consumer group on the specified partition."
-  [topic consumer partition new-offset]
+  [topic consumer group-id partition new-offset]
   ; IMPORTANT: For this to work you need make sure that no consumers in the same group are
   ; already running against this partition.
   (let [topic-name      (->topic-name topic)
@@ -226,12 +228,21 @@
                           new-offset)]
     (cond
       (= :end adjusted-offset)
-      (.seekToEnd consumer [tp])
+      (do
+        (log/debugf "Seeking to end of %s-%s in group %s." topic-name partition group-id)
+        (.seekToEnd consumer [tp])
+        (.position consumer tp))
 
       (= :start adjusted-offset)
-      (.seekToBeginning consumer [tp])
+      (do
+        (log/debugf "Seeking to start of %s-%s in group %s." topic-name partition group-id)
+        (.seekToBeginning consumer [tp])
+        (.position consumer tp))
 
-      :else (.seek consumer tp adjusted-offset))
+      :else
+      (do
+        (log/debugf "Seeking to %s of %s-%s in group %s." adjusted-offset topic-name partition group-id)
+        (.seek consumer tp adjusted-offset)))
 
     (.commitSync consumer)))
 
@@ -245,7 +256,7 @@
   * :end - seek to end.
   * date-time string - set offset to that which was current at the given time."
   [topic group partition-offsets & {:keys [consumer] :or {consumer nil}}]
-  (let [group-id   (->group-id group)
+  (let [group-id         (->group-id group)
         topic-name       (->topic-name topic)
         kafka-config     (:kafka-config *config*)
         cc               (-> kafka-config
@@ -264,8 +275,7 @@
     Make sure that no other consumers on the same group are running before continuing." group-id topic-name (count partition-offsets))
       (try
         (doseq [[p o] partition-offsets]
-          (set-group-offset! topic-name new-consumer p o))
-        (.poll new-consumer 1000)
+          (set-group-offset! topic-name new-consumer group-id p o))
         (.commitSync new-consumer)
         (finally
           (when create-consumer?
@@ -309,7 +319,7 @@
   |:-------------------|:--------|:------------|
   | `:verbose?`        | `false` | If `true`, will include by-partition breakdown. |"
   [topic group & {:keys [verbose?] :or {verbose? true}}]
-  (let [group-id   (->group-id group)
+  (let [group-id        (->group-id group)
         topic-name      (->topic-name topic)
         current-offsets (get-group-offsets topic-name group-id)
         latest-offsets  (get-latest-offsets topic-name)]
@@ -591,6 +601,7 @@
 
                (let [[k v] next
                      record (ProducerRecord. topic-name k v)]
+                 (log/debugf "Producing record %s to key %s on topic %s." v k topic-name)
                  (.send producer record)))
              (recur (async/<!! ch))))
          (finally
