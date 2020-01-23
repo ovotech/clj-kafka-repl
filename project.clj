@@ -14,11 +14,12 @@
                  [ovotech/kafka-avro-confluent "2.1.0-4"]]
 
   :plugins [[mvxcvi/whidbey "2.0.0"]
-            [lein-codox "0.10.5"]]
+            [lein-codox "0.10.7"]]
 
   :middleware [whidbey.plugin/repl-pprint]
 
   :codox {:output-path "docs"
+          :namespaces  [clj-kafka-repl.kafka clj-kafka-repl.channel]
           :metadata    {:doc/format :markdown}
           :project     {:name "clj-kafka-repl", :version nil, :package nil}}
 
