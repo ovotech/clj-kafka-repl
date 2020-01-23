@@ -9,22 +9,22 @@ General purpose Clojure REPL functions for interrogating Kafka.
 Features
 --------
 
-The functionality provided can be split as follows:
+The functionality provided in the `kafka` namespace can be split as follows:
 
-* Consumer group offsets: [kafka/get-group-offset](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-group-offset),
- [kafka/get-group-offset](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-group-offsets), 
- [kafka/get-earliest-offsets](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-earliest-offsets),
- [kafka/get-latest-offsets](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-latest-offsets),
- [kafka/set-group-offsets!](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-set-group-offsets!),
- [kafka/get-lag](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-lag),
-* Consuming: [kafka/consume](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-consume), 
- [kafka/sample](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-sample),
- [kafka/get-message](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-message),
- [kafka/get-topic-partitions](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-topic-partitions),
-* Producing: [kafka/produce](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-produce) 
+* Consumer group offsets: [get-group-offset](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-group-offset),
+ [get-group-offset](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-group-offsets), 
+ [get-earliest-offsets](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-earliest-offsets),
+ [get-latest-offsets](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-latest-offsets),
+ [set-group-offsets!](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-set-group-offsets!),
+ [get-lag](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-lag),
+* Consuming: [consume](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-consume), 
+ [sample](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-sample),
+ [get-message](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-message),
+ [get-topic-partitions](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-topic-partitions),
+* Producing: [produce](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-produce) 
 
 The core.async functionality in the [ch namespace](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.channel.html)
-is intended for use with the [kafka/consume](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-consume)
+is intended for use with the [consume](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-consume)
 function.
 
 Getting started
