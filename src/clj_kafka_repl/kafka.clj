@@ -355,27 +355,24 @@
   Examples of pulling data from channels:
 
   - Pop the next message (if any) from the channel:
-    (ch/poll! tc)
+    ([[ch/poll!]] tc)
 
   - Stream channel to file:
-    (ch/to-file tc \"/workspace/temp/your-file\")
+    ([[ch/to-file]] tc \"/workspace/temp/your-file\")
 
   - Stream channel to stdout:
-    (ch/to-stdout tc)
+    ([[ch/to-stdout]] tc)
 
-  - Close and dump current contents of channel to stdout:
-    (ch/dump! tc)
-
-  And then close the channel with:
-  (ch/close! tc)
+  - And then close the channel with:
+    ([[ch/close!]] tc)
 
   | key                  | default | description |
   |:---------------------|:--------|:------------|
   | `:partition`         | `nil`   | Limit consumption to a specific partition. |
   | `:offset`            | `:end`  | Start consuming from the specified offset. Valid values: `:start`, `:end`, numeric offset, timestamp (as date/time string) |
   | `:partition-offsets` | `nil`   | Vector of partition+offset vector pairs that represent a by-partition representation of offsets to start consuming from. |
-  | `:key-deserializer`  | `nil`   | Deserializer to use to deserialize the message key. Will use a string deserializer if not specified. |
-  | `:value-deserializer`| `nil`   | Deserializer to use to deserialize the message value. Will use an edn deserializer if not specified. |
+  | `:key-deserializer`  | `nil`   | Deserializer to use to deserialize the message key. Overrides the value in config. Defaults to a string deserializer. |
+  | `:value-deserializer`| `nil`   | Deserializer to use to deserialize the message value. Overrides the value in config. Defaults to a string deserializer. |
   | `:limit`             | `nil`   | The maximum number of messages to pull back either into the stream or the results vector (depending on stream mode). |
   | `:filter-fn`         | `nil`   | `filter` function to apply to the incoming :kafka-message(s). Can be a string, in which case a filter on the message value containing that string is implied. |"
   [topic & {:keys [partition offset partition-offsets key-deserializer value-deserializer limit filter-fn]
@@ -543,12 +540,12 @@
 (defn get-message
   "Gets the message at the specified offset on the given topic (if any).
 
-  | key                  | default | description |
-  |:---------------------|:--------|:------------|
-  | `:partition`         | `nil`   | Limit consumption to a specific partition. |
-  | `:deserializer`      | `nil`   | Deserializer to use to deserialize the message value. Will create an avro-deserializer if not specified (or nippy-deserializer if topic name contains the word 'internal'). |"
-  [topic offset & {:keys [deserializer partition]
-                   :or   {deserializer nil
+  | key                   | default | description |
+  |:----------------------|:--------|:------------|
+  | `:partition`          | `nil`   | Limit consumption to a specific partition. |
+  | `:value-deserializer` | `nil`   | Deserializer to use to deserialize the message value. |"
+  [topic offset & {:keys [value-deserializer partition]
+                   :or   {value-deserializer nil
                           partition    nil}}]
   (let [topic-name (->topic-name topic)
         args       (concat [topic-name
@@ -556,7 +553,7 @@
                             :limit 1
                             :filter-fn #(= offset (:offset (meta %)))]
                            (when (some? partition) [:partition partition])
-                           (when (some? deserializer) [:deserializer deserializer]))
+                           (when (some? value-deserializer) [:value-deserializer value-deserializer]))
         ch         (apply consume args)
         f          (future
                      (loop [m (ch/poll! ch)]

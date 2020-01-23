@@ -45,7 +45,9 @@
       (fn next)
       (recur (async/<!! channel)))))
 
-(defmulti to (fn [_ target] (type target)))
+(defmulti to
+          "Provides facilities for piping the content of the tracked channel to a given target."
+          (fn [_ target] (type target)))
 
 (defmethod to PrintWriter [{:keys [channel]} writer]
   (future
