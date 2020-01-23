@@ -6,6 +6,27 @@ General purpose Clojure REPL functions for interrogating Kafka.
 
 [API](https://ovotech.github.io/clj-kafka-repl/)
 
+Features
+--------
+
+The functionality provided can be split as follows:
+
+* Consumer group offsets: [kafka/get-group-offset](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-group-offset),
+ [kafka/get-group-offset](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-group-offsets), 
+ [kafka/get-earliest-offsets](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-earliest-offsets),
+ [kafka/get-latest-offsets](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-latest-offsets),
+ [kafka/set-group-offsets!](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-set-group-offsets!),
+ [kafka/get-lag](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-lag),
+* Consuming: [kafka/consume](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-consume), 
+ [kafka/sample](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-sample),
+ [kafka/get-message](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-message),
+ [kafka/get-topic-partitions](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-get-topic-partitions),
+* Producing: [kafka/produce](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-produce) 
+
+The core.async functionality in the [ch namespace](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.channel.html)
+is intended for use with the [kafka/consume](https://ovotech.github.io/clj-kafka-repl/clj-kafka-repl.kafka.html#var-consume)
+function.
+
 Getting started
 ---------------
 

@@ -1,4 +1,5 @@
 (ns clj-kafka-repl.kafka
+  "Functions for consuming, producing and reading metadata from kafka."
   (:require [clojure.spec.alpha :as s]
             [clj-kafka-repl.confirm :refer [with-confirmation]]
             [clj-kafka-repl.channel :as ch]
@@ -16,9 +17,9 @@
            (java.util UUID)
            (org.apache.kafka.clients.producer ProducerRecord KafkaProducer)))
 
-(def max-poll-records 500)
+(def ^:private max-poll-records 500)
 
-(defn zoned-date-time-string?
+(defn- zoned-date-time-string?
   [s]
   (-> (and
         (string? s)
@@ -301,7 +302,7 @@
      :offsets      {:current current-offsets
                     :latest  refined-latest-offsets}}))
 
-(defn lag
+(defn get-lag
   "Gets the topic lag for the given consumer group.
 
   | key                | default | description |
@@ -318,7 +319,7 @@
       (-> (offsets-diff current-offsets latest-offsets)
           (lag-sum)))))
 
-(s/fdef lag
+(s/fdef get-lag
         :args (s/cat :topic ::topic
                      :group ::group
                      :overrides (s/* (s/alt :verbose? (s/cat :opt #(= % :verbose?) :value boolean?))))

@@ -1,4 +1,5 @@
 (ns clj-kafka-repl.channel
+  "core.async based functions for use with [[kafka/consume]]."
   (:require [clojure.core.async :as async]
             [clojure.core.async.impl.protocols :as async-protocols]
             [clojure.java.io :as io]
