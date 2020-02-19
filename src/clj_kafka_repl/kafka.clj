@@ -189,7 +189,8 @@
       (->> (.beginningOffsets new-consumer topic-partitions)
            (map (fn [[tp o]]
                   [(.partition tp) o]))
-           (sort-by first))
+           (sort-by first)
+           (vec))
 
       (finally
         (.close new-consumer 0 TimeUnit/SECONDS)))))
@@ -207,7 +208,8 @@
        (get-topic-partitions)
        (map (fn [p]
               [p (get-group-offset topic group p)]))
-       (remove (fn [[_ o]] (nil? o)))))
+       (remove (fn [[_ o]] (nil? o)))
+       (vec)))
 
 (s/fdef get-group-offsets
         :args (s/cat :topic ::topic
