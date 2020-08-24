@@ -428,7 +428,7 @@
           (set-group-offsets! topic-name group-id partition-offsets :consumer consumer))
 
         :else
-        (let [earliest-offset   (apply min (map second (get-earliest-offsets kafka-config topic-name :partitions partitions)))
+        (let [earliest-offset   (apply min (map second (get-earliest-offsets topic-name :partitions partitions)))
               partition-offsets (vec (map #(vector % offset) partitions))]
           (if (< earliest-offset offset)
             (set-group-offsets! topic-name group-id partition-offsets :consumer consumer)
