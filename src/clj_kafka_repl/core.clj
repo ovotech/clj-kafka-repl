@@ -3,6 +3,7 @@
 
 (def ^:dynamic *config* nil)
 (def ^:dynamic *options* nil)
+(def ^:dynamic *profile* nil)
 
 (def all-config (atom nil))
 
@@ -15,7 +16,8 @@
   [profile & body]
   `(binding [*options* (-> (deref all-config)
                            (dissoc :profiles))
-             *config* (get-in (deref all-config) [:profiles ~profile])]
+             *config*  (get-in (deref all-config) [:profiles ~profile])
+             *profile* ~profile]
      ~@body))
 
 

@@ -3,7 +3,7 @@
   (:require [clj-kafka-repl.channel :as ch]
             [clj-kafka-repl.confirm :refer [with-confirmation]]
             [clj-kafka-repl.confirm :refer [with-confirmation] :as confirm]
-            [clj-kafka-repl.core :refer [*config* *options*]]
+            [clj-kafka-repl.core :refer [*config* *options* *profile* with]]
             [clj-kafka-repl.deserialization :as dser :refer [new-deserializer]]
             [clj-kafka-repl.serialization :as ser :refer [new-serializer]]
             [clojure.core.async :as async]
@@ -451,22 +451,26 @@
           ch
           (async/chan limit)
 
+          profile
+          *profile*
+
           tracked-channel
           {:channel     ch
-           :progress-fn #(let [{:keys [by-partition total-received]}
-                               @progress
+           :progress-fn #(with profile
+                               (let [{:keys [by-partition total-received]}
+                                     @progress
 
-                               current-offsets
-                               (into [] by-partition)
+                                     current-offsets
+                                     (into [] by-partition)
 
-                               latest-offsets
-                               (get-latest-offsets topic-name)
+                                     latest-offsets
+                                     (get-latest-offsets topic-name)
 
-                               {:keys [total-lag offsets]}
-                               (to-lag-map current-offsets latest-offsets)]
-                           {:total-received  total-received
-                            :total-remaining total-lag
-                            :offsets         offsets})}]
+                                     {:keys [total-lag offsets]}
+                                     (to-lag-map current-offsets latest-offsets)]
+                                 {:total-received  total-received
+                                  :total-remaining total-lag
+                                  :offsets         offsets}))}]
       (future
         (try
           (loop []

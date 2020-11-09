@@ -4,7 +4,8 @@
             [clojure.core.async.impl.protocols :as async-protocols]
             [clojure.java.io :as io]
             [clojure.spec.alpha :as s]
-            [puget.printer :as puget])
+            [puget.printer :as puget]
+            [clojure.tools.logging :as log])
   (:import (clojure.lang Atom)
            (java.io PrintWriter)))
 
@@ -40,10 +41,13 @@
 
 (defn- loop-channel
   [channel fn]
-  (loop [next (async/<!! channel)]
-    (when next
-      (fn next)
-      (recur (async/<!! channel)))))
+  (try
+    (loop [next (async/<!! channel)]
+      (when next
+        (fn next)
+        (recur (async/<!! channel))))
+    (catch Exception e
+      (log/error e))))
 
 (defmulti to
           "Provides facilities for piping the content of the tracked channel to a given target."
@@ -65,8 +69,8 @@
 
 (defn to-stdout
   "Streams the contents of the specified to stdout."
-  [{:keys [channel]}]
-  (to channel *out*))
+  [tracked-channel]
+  (to tracked-channel *out*))
 
 (s/fdef to-stdout
         :args (s/cat :tracked-channel ::tracked-channel
@@ -75,8 +79,8 @@
 
 (defn to-file
   "Streams the contents of the specified channel to the given file path."
-  [{:keys [channel]} f]
-  (to channel f))
+  [tracked-channel f]
+  (to tracked-channel f))
 
 (s/fdef to-file
         :args (s/cat :tracked-channel ::tracked-channel
